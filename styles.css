@@ -1306,3 +1306,55 @@ body {
   align-items: center;
   gap: 12px;
 }
+
+/* --- Cloud Status Indicator --- */
+.cloud-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-speed);
+}
+
+.cloud-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
+  color: var(--text-secondary);
+}
+
+.cloud-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981; /* Synced green */
+  box-shadow: 0 0 6px #10b981;
+  transition: all var(--transition-speed);
+}
+
+.cloud-status-indicator.syncing .cloud-icon {
+  animation: pulseCloud 1.2s infinite ease-in-out;
+  color: var(--secondary-color);
+}
+
+.cloud-status-indicator.syncing .cloud-status-dot {
+  background: var(--secondary-color);
+  box-shadow: 0 0 6px var(--secondary-color);
+}
+
+.cloud-status-indicator.offline .cloud-icon {
+  color: var(--accent-color);
+}
+
+.cloud-status-indicator.offline .cloud-status-dot {
+  background: var(--accent-color);
+  box-shadow: 0 0 6px var(--accent-color);
+}
+
+@keyframes pulseCloud {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}

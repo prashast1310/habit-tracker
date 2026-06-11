@@ -4,6 +4,7 @@
 class AuraHabitApp {
   constructor() {
     this.storageKey = 'aurahabit_state_v1';
+    this.kvdbBucket = 'CRf8fJZNUyvfigbuZ46Kmj'; // Cloud sync database ID
     
     // Default Habits Setup (used to initialize profiles)
     this.defaultHabits = [
@@ -86,6 +87,85 @@ class AuraHabitApp {
     
     // Initial Render
     this.render();
+
+    // Trigger Cloud Sync Background Threads
+    this.syncAllProfilesFromCloud();
+  }
+
+  // --- Cloud Database Synchronizers ---
+  setCloudStatus(status) { // 'synced' | 'syncing' | 'offline'
+    if (!this.elements.cloudStatus) return;
+    this.elements.cloudStatus.className = 'cloud-status-indicator ' + status;
+    
+    let title = 'Cloud Sync: ';
+    if (status === 'synced') title += 'All changes saved to cloud database';
+    if (status === 'syncing') title += 'Syncing changes with cloud database...';
+    if (status === 'offline') title += 'Cannot connect to database. Storing changes locally.';
+    this.elements.cloudStatus.setAttribute('title', title);
+  }
+
+  async syncProfileFromCloud(user) {
+    this.setCloudStatus('syncing');
+    try {
+      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}`);
+      if (response.ok) {
+        const cloudData = await response.json();
+        if (cloudData && cloudData.habits) {
+          this.state.profiles[user] = cloudData;
+          this.saveState(); // Update local backup
+          this.setCloudStatus('synced');
+          return true;
+        }
+      } else if (response.status === 404) {
+        // Doesn't exist on cloud yet. Let's upload local state.
+        await this.syncProfileToCloud(user);
+        this.setCloudStatus('synced');
+        return true;
+      }
+    } catch (err) {
+      console.warn(`Could not sync profile ${user} from cloud (offline):`, err);
+      this.setCloudStatus('offline');
+    }
+    return false;
+  }
+
+  async syncProfileToCloud(user) {
+    this.setCloudStatus('syncing');
+    const profileData = this.state.profiles[user];
+    try {
+      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileData)
+      });
+      if (response.ok) {
+        this.setCloudStatus('synced');
+        return true;
+      } else {
+        this.setCloudStatus('offline');
+      }
+    } catch (err) {
+      console.warn(`Could not sync profile ${user} to cloud (offline):`, err);
+      this.setCloudStatus('offline');
+    }
+    return false;
+  }
+
+  async syncAllProfilesFromCloud() {
+    const users = Object.keys(this.state.profiles);
+    let rendered = false;
+    for (const user of users) {
+      const success = await this.syncProfileFromCloud(user);
+      if (success && user === this.state.currentUser) {
+        this.render();
+        rendered = true;
+      }
+    }
+    if (!rendered) {
+      this.setCloudStatus('synced');
+    }
   }
 
   // --- Load State from LocalStorage (with Migration Support) ---
@@ -95,7 +175,6 @@ class AuraHabitApp {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.profiles) {
-          // New structural format
           this.state.profiles = parsed.profiles;
           this.state.currentUser = parsed.currentUser || 'Nihu';
         } else {
@@ -160,6 +239,7 @@ class AuraHabitApp {
     this.elements.currentUserName = document.getElementById('current-user-name');
     this.elements.profileSelectBtn = document.getElementById('profile-select-btn');
     this.elements.profileMenu = document.getElementById('profile-menu');
+    this.elements.cloudStatus = document.getElementById('cloud-status');
     
     this.elements.overallPercentage = document.getElementById('overall-percentage');
     this.elements.morningGauge = document.getElementById('morning-gauge');
@@ -309,6 +389,11 @@ class AuraHabitApp {
           
           this.saveState();
           this.render();
+
+          // Sync profile values from cloud upon switching
+          this.syncProfileFromCloud(user).then((success) => {
+            if (success) this.render();
+          });
         });
       });
     }
@@ -359,6 +444,9 @@ class AuraHabitApp {
         activeProfile.hydration[dateStr] = newIntake;
         this.saveState();
         this.render();
+
+        // Push hydration updates to cloud database
+        this.syncProfileToCloud(this.state.currentUser);
       });
     });
   }
@@ -392,6 +480,9 @@ class AuraHabitApp {
     this.state.profiles[this.state.currentUser].habits.push(newHabit);
     this.saveState();
     this.render();
+
+    // Push addition to cloud database
+    this.syncProfileToCloud(this.state.currentUser);
   }
 
   // --- Delete Habit ---
@@ -400,6 +491,9 @@ class AuraHabitApp {
     activeProfile.habits = activeProfile.habits.filter(h => h.id !== id);
     this.saveState();
     this.render();
+
+    // Push deletion to cloud database
+    this.syncProfileToCloud(this.state.currentUser);
   }
 
   // --- Toggle Habit Completion ---
@@ -414,6 +508,9 @@ class AuraHabitApp {
       }
       this.saveState();
       this.render();
+
+      // Push tick changes to cloud database
+      this.syncProfileToCloud(this.state.currentUser);
     }
   }
 
