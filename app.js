@@ -4,7 +4,7 @@
 class AuraHabitApp {
   constructor() {
     this.storageKey = 'aurahabit_state_v1';
-    this.kvdbBucket = 'CRf8fJZNUyvfigbuZ46Kmj'; // Cloud sync database ID
+    this.kvdbBucket = 'CuigENjBBWji4SdX7Ypyk9'; // Cloud sync database ID
     
     // Default Habits Setup (used to initialize profiles)
     this.defaultHabits = [
