@@ -1,0 +1,18 @@
+{
+  "name": "AuraHabit // Nihu's Daily Rituals",
+  "short_name": "AuraHabit",
+  "description": "Premium daily routine and habit tracker personalized for Nihu.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#110c1c",
+  "theme_color": "#ff9e7d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraHabit // Nihu's Daily Rituals</title>
+  <!-- Google Fonts - Outfit & Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Stylesheets & Manifest -->
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff9e7d">
+  <!-- Web Clip / PWA Support for iOS/Safari -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AuraHabit">
+</head>
+<body class="morning-theme">
+  <!-- Dynamic Aura Background Elements -->
+  <div class="aura-bg-sphere aura-1"></div>
+  <div class="aura-bg-sphere aura-2"></div>
+  <div class="aura-bg-sphere aura-3"></div>
+
+  <div class="app-container">
+    <!-- Header Section -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="greeting-subtitle">Your Space</span>
+        <h1 id="greeting-text">Rise & Shine, Nihu! 🌅</h1>
+        <p class="live-date-time"><span id="current-day">Thursday</span> • <span id="current-time">08:00 AM</span></p>
+      </div>
+      <div class="header-right">
+        <!-- Manual Theme & Routine Switcher Toggle -->
+        <button id="theme-toggle-btn" class="glass-btn theme-toggle-btn" title="Toggle Theme Manual Override">
+          <i data-lucide="sun" class="sun-icon"></i>
+          <i data-lucide="moon" class="moon-icon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Overview Stats Dashboard Grid -->
+    <section class="dashboard-grid">
+      <!-- Quick Progress Card -->
+      <div class="glass-card overview-card progress-overview">
+        <div class="card-header">
+          <h3>Daily Status</h3>
+          <span class="badge" id="overall-percentage">0% Done</span>
+        </div>
+        <div class="progress-gauges-container">
+          <div class="gauge-wrapper" title="Morning Routine Completion">
+            <svg class="progress-ring" width="80" height="80">
+              <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
+              <circle id="morning-gauge" class="progress-ring-circle" stroke="var(--primary-color)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40" stroke-dasharray="201" stroke-dashoffset="201"/>
+            </svg>
+            <div class="gauge-label">
+              <span class="label-name">Morning</span>
+              <span class="label-val" id="morning-ratio">0/4</span>
+            </div>
+          </div>
+          <div class="gauge-wrapper" title="Evening Routine Completion">
+            <svg class="progress-ring" width="80" height="80">
+              <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
+              <circle id="evening-gauge" class="progress-ring-circle" stroke="var(--evening-accent)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40" stroke-dasharray="201" stroke-dashoffset="201"/>
+            </svg>
+            <div class="gauge-label">
+              <span class="label-name">Evening</span>
+              <span class="label-val" id="evening-ratio">0/3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hydration Card -->
+      <div class="glass-card overview-card hydration-card">
+        <div class="card-header">
+          <div class="header-title-wrapper">
+            <i data-lucide="droplet" class="card-icon-water"></i>
+            <h3>Hydration Flow</h3>
+          </div>
+          <span class="water-count-badge"><span id="water-intake">0</span>/6 Bottles</span>
+        </div>
+        <div class="hydration-status-desc">Goal: Stay hydrated throughout the day</div>
+        
+        <!-- Interactive Water Bottles Grid -->
+        <div class="bottles-container" id="bottles-grid">
+          <button class="bottle-btn" data-index="0" aria-label="Drink bottle 1">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+          <button class="bottle-btn" data-index="1" aria-label="Drink bottle 2">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+          <button class="bottle-btn" data-index="2" aria-label="Drink bottle 3">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+          <button class="bottle-btn" data-index="3" aria-label="Drink bottle 4">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+          <button class="bottle-btn" data-index="4" aria-label="Drink bottle 5">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+          <button class="bottle-btn" data-index="5" aria-label="Drink bottle 6">
+            <div class="bottle-wave"></div>
+            <i data-lucide="glass-water"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Streak / Motivation Card -->
+      <div class="glass-card overview-card streak-card">
+        <div class="card-header">
+          <h3>Consistency</h3>
+          <i data-lucide="flame" class="streak-flame-icon"></i>
+        </div>
+        <div class="streak-data-row">
+          <div class="streak-stat">
+            <span class="streak-num" id="current-streak-val">0</span>
+            <span class="streak-lbl">Current Streak</span>
+          </div>
+          <div class="streak-divider"></div>
+          <div class="streak-stat">
+            <span class="streak-num" id="best-streak-val">0</span>
+            <span class="streak-lbl">Best Record</span>
+          </div>
+        </div>
+        <div class="streak-footer">
+          <span id="streak-motivation-msg">Start completion today to build momentum!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Routine Section Tabs and Habit List -->
+    <main class="routine-section">
+      <div class="routine-tabs-header">
+        <div class="tabs-slider-wrapper">
+          <button class="tab-btn active" id="tab-morning">
+            <i data-lucide="sunrise"></i> Morning Rituals
+          </button>
+          <button class="tab-btn" id="tab-evening">
+            <i data-lucide="moonstar"></i> Evening Rituals
+          </button>
+        </div>
+        <button id="add-habit-btn" class="action-btn add-btn">
+          <i data-lucide="plus"></i> Add Habit
+        </button>
+      </div>
+
+      <!-- Habit Checklist Container -->
+      <div class="habit-list-container">
+        <div class="habit-list-scroll" id="habit-list-container">
+          <!-- Habit card entries are dynamically generated here -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Calendar Streak Grid (Aesthetic 7-day strip) -->
+    <footer class="weekly-tracker-footer glass-card">
+      <div class="footer-header">
+        <h4>Weekly Visual Log</h4>
+        <span class="weekly-subtitle">Last 7 days tracking</span>
+      </div>
+      <div class="weekly-days-grid" id="weekly-days-grid">
+        <!-- 7 Days nodes dynamic injection -->
+      </div>
+    </footer>
+  </div>
+
+  <!-- Add Habit Modal Dialog -->
+  <div class="modal-overlay" id="habit-modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h2>Add Custom Habit</h2>
+        <button class="close-btn" id="close-modal-btn">&times;</button>
+      </div>
+      <form id="add-habit-form" class="modal-form">
+        <div class="form-group">
+          <label for="habit-name">Habit Title</label>
+          <input type="text" id="habit-name" required placeholder="e.g. Meditate for 10 mins..." maxlength="30">
+        </div>
+        <div class="form-group">
+          <label for="habit-desc">Short Description (Optional)</label>
+          <input type="text" id="habit-desc" placeholder="e.g. Focus on deep breaths" maxlength="50">
+        </div>
+        <div class="form-group">
+          <label>Target Routine Time</label>
+          <div class="routine-radio-group">
+            <label class="radio-label">
+              <input type="radio" name="habit-routine" value="morning" checked>
+              <div class="radio-custom-btn">
+                <i data-lucide="sunrise"></i> Morning
+              </div>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="habit-routine" value="evening">
+              <div class="radio-custom-btn">
+                <i data-lucide="moonstar"></i> Evening
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" id="cancel-modal-btn">Cancel</button>
+          <button type="submit" class="submit-btn">Create Habit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+  <script>
+    // Register Service Worker for Offline / Install Support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker Registered!', reg.scope))
+          .catch(err => console.error('Service Worker Registration Failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
