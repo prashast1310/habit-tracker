@@ -1197,3 +1197,112 @@ body {
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
+
+/* --- Profile Switcher Styling --- */
+.profile-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+  z-index: 500;
+}
+
+.profile-select-btn {
+  padding: 10px 16px;
+  gap: 8px;
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.user-avatar-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--primary-color);
+}
+
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  transition: transform var(--transition-speed);
+}
+
+.profile-dropdown-wrapper.active .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: all var(--transition-speed) var(--transition-ease);
+  z-index: 1000;
+}
+
+.profile-dropdown-wrapper.active .profile-dropdown-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.profile-menu-item {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  transition: all var(--transition-speed) var(--transition-ease);
+  width: 100%;
+}
+
+.profile-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.profile-menu-item.active {
+  color: #fff;
+  background: var(--primary-glow);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.avatar-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.avatar-nihu {
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+}
+
+.avatar-pruthu {
+  background: linear-gradient(135deg, var(--secondary-color), var(--evening-accent));
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

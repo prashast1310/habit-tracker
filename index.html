@@ -48,11 +48,28 @@
     <!-- Header Section -->
     <header class="app-header">
       <div class="header-left">
-        <span class="greeting-subtitle">Your Space</span>
+        <span class="greeting-subtitle" id="user-subtitle">Nihu's Space</span>
         <h1 id="greeting-text">Rise & Shine, Nihu! 🌅</h1>
         <p class="live-date-time"><span id="current-day">Thursday</span> • <span id="current-time">08:00 AM</span></p>
       </div>
       <div class="header-right">
+        <!-- Profile Switcher Dropdown -->
+        <div class="profile-dropdown-wrapper">
+          <button id="profile-select-btn" class="glass-btn profile-select-btn">
+            <i data-lucide="user" class="user-avatar-icon"></i>
+            <span id="current-user-name">Nihu</span>
+            <i data-lucide="chevron-down" class="chevron-icon"></i>
+          </button>
+          <div class="profile-dropdown-menu glass-card" id="profile-menu">
+            <button class="profile-menu-item active" data-user="Nihu">
+              <span class="avatar-dot avatar-nihu">N</span> Nihu
+            </button>
+            <button class="profile-menu-item" data-user="Pruthu">
+              <span class="avatar-dot avatar-pruthu">P</span> Pruthu
+            </button>
+          </div>
+        </div>
+
         <!-- Manual Theme & Routine Switcher Toggle -->
         <button id="theme-toggle-btn" class="glass-btn theme-toggle-btn" title="Toggle Theme Manual Override">
           <i data-lucide="sun" class="sun-icon"></i>

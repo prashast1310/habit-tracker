@@ -1,11 +1,11 @@
-// AuraHabit Core Logic - Designed for Nihu
+// AuraHabit Core Logic - Designed for Nihu & Pruthu
 
 // --- Application State Manager ---
 class AuraHabitApp {
   constructor() {
     this.storageKey = 'aurahabit_state_v1';
     
-    // Default Habits Setup
+    // Default Habits Setup (used to initialize profiles)
     this.defaultHabits = [
       { id: 'h1', name: 'Meditate', desc: 'Focus on breathing & mindfulness', routine: 'morning', history: {}, streak: 0 },
       { id: 'h2', name: 'Journal', desc: 'Reflect and plan the day', routine: 'morning', history: {}, streak: 0 },
@@ -17,8 +17,17 @@ class AuraHabitApp {
     ];
 
     this.state = {
-      habits: [],
-      hydration: {}, // key: 'YYYY-MM-DD', value: number (0-6)
+      currentUser: 'Nihu', // 'Nihu' | 'Pruthu'
+      profiles: {
+        'Nihu': {
+          habits: [],
+          hydration: {}
+        },
+        'Pruthu': {
+          habits: [],
+          hydration: {}
+        }
+      },
       activeRoutine: 'morning', // 'morning' | 'evening'
       themeOverride: null // 'morning' | 'evening' | null (null auto-calculates based on time)
     };
@@ -79,14 +88,30 @@ class AuraHabitApp {
     this.render();
   }
 
-  // --- Load State from LocalStorage ---
+  // --- Load State from LocalStorage (with Migration Support) ---
   loadState() {
     const raw = localStorage.getItem(this.storageKey);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        this.state.habits = parsed.habits || [];
-        this.state.hydration = parsed.hydration || {};
+        if (parsed.profiles) {
+          // New structural format
+          this.state.profiles = parsed.profiles;
+          this.state.currentUser = parsed.currentUser || 'Nihu';
+        } else {
+          // Migrate old structure v1 (preserves Nihu's ticks)
+          this.state.profiles = {
+            'Nihu': {
+              habits: parsed.habits || JSON.parse(JSON.stringify(this.defaultHabits)),
+              hydration: parsed.hydration || {}
+            },
+            'Pruthu': {
+              habits: JSON.parse(JSON.stringify(this.defaultHabits)),
+              hydration: {}
+            }
+          };
+          this.state.currentUser = 'Nihu';
+        }
         this.state.themeOverride = parsed.themeOverride || null;
       } catch (e) {
         console.error('Failed parsing state, resetting to defaults.', e);
@@ -98,8 +123,17 @@ class AuraHabitApp {
   }
 
   resetStateToDefault() {
-    this.state.habits = JSON.parse(JSON.stringify(this.defaultHabits));
-    this.state.hydration = {};
+    this.state.profiles = {
+      'Nihu': {
+        habits: JSON.parse(JSON.stringify(this.defaultHabits)),
+        hydration: {}
+      },
+      'Pruthu': {
+        habits: JSON.parse(JSON.stringify(this.defaultHabits)),
+        hydration: {}
+      }
+    };
+    this.state.currentUser = 'Nihu';
     this.state.themeOverride = null;
     this.saveState();
   }
@@ -107,8 +141,8 @@ class AuraHabitApp {
   // --- Save State to LocalStorage ---
   saveState() {
     const dataToSave = {
-      habits: this.state.habits,
-      hydration: this.state.hydration,
+      profiles: this.state.profiles,
+      currentUser: this.state.currentUser,
       themeOverride: this.state.themeOverride
     };
     localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
@@ -120,6 +154,12 @@ class AuraHabitApp {
     this.elements.greeting = document.getElementById('greeting-text');
     this.elements.day = document.getElementById('current-day');
     this.elements.time = document.getElementById('current-time');
+    
+    // Profile Elements
+    this.elements.userSubtitle = document.getElementById('user-subtitle');
+    this.elements.currentUserName = document.getElementById('current-user-name');
+    this.elements.profileSelectBtn = document.getElementById('profile-select-btn');
+    this.elements.profileMenu = document.getElementById('profile-menu');
     
     this.elements.overallPercentage = document.getElementById('overall-percentage');
     this.elements.morningGauge = document.getElementById('morning-gauge');
@@ -174,7 +214,7 @@ class AuraHabitApp {
       
       // Update Day
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      this.elements.day.textContent = days[now.getDay()];
+      if (this.elements.day) this.elements.day.textContent = days[now.getDay()];
       
       // Format Time
       let hours = now.getHours();
@@ -184,7 +224,7 @@ class AuraHabitApp {
       hours = hours ? hours : 12; // 0 should be 12
       const formattedTime = `${hours}:${minutes} ${ampm}`;
       
-      this.elements.time.textContent = formattedTime;
+      if (this.elements.time) this.elements.time.textContent = formattedTime;
       
       // Update dynamic greeting header depending on time
       this.updateGreetingText(now.getHours());
@@ -197,33 +237,32 @@ class AuraHabitApp {
     setInterval(updateTime, 10000); // Update every 10 seconds to minimize CPU load
   }
 
-  // --- Greeting Customization for Nihu ---
+  // --- Greeting Customization for Profiles ---
   updateGreetingText(hour) {
+    const user = this.state.currentUser;
     let greeting = '';
     if (hour >= 5 && hour < 12) {
-      greeting = 'Rise & Shine, Nihu! 🌅';
+      greeting = `Rise & Shine, ${user}! 🌅`;
     } else if (hour >= 12 && hour < 17) {
-      greeting = 'Good Afternoon, Nihu! ☀️';
+      greeting = `Good Afternoon, ${user}! ☀️`;
     } else if (hour >= 17 && hour < 22) {
-      greeting = 'Good Evening, Nihu! 🌌';
+      greeting = `Good Evening, ${user}! 🌌`;
     } else {
-      greeting = 'Time to Unwind, Nihu! 🌙';
+      greeting = `Time to Unwind, ${user}! 🌙`;
     }
     
-    if (this.elements.greeting.textContent !== greeting) {
+    if (this.elements.greeting && this.elements.greeting.textContent !== greeting) {
       this.elements.greeting.textContent = greeting;
     }
   }
 
   // --- Theme Class Manager ---
   updateThemeStyle(hour) {
-    // If user set an override, honor it
     if (this.state.themeOverride) {
       this.elements.body.className = this.state.themeOverride === 'morning' ? 'morning-theme' : 'evening-theme';
       return;
     }
     
-    // Otherwise calculate dynamically
     if (hour >= 5 && hour < 16) {
       this.elements.body.className = 'morning-theme';
     } else {
@@ -244,6 +283,35 @@ class AuraHabitApp {
       this.saveState();
       this.render();
     });
+
+    // Profile Dropdown Toggle
+    if (this.elements.profileSelectBtn) {
+      this.elements.profileSelectBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.elements.profileSelectBtn.parentElement.classList.toggle('active');
+      });
+    }
+
+    // Close Dropdown on outside click
+    document.addEventListener('click', () => {
+      if (this.elements.profileSelectBtn) {
+        this.elements.profileSelectBtn.parentElement.classList.remove('active');
+      }
+    });
+
+    // Profile switch selection click
+    if (this.elements.profileMenu) {
+      const menuItems = this.elements.profileMenu.querySelectorAll('.profile-menu-item');
+      menuItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const user = item.getAttribute('data-user');
+          this.state.currentUser = user;
+          
+          this.saveState();
+          this.render();
+        });
+      });
+    }
 
     // Routine Tabs Toggle
     this.elements.tabMorning.addEventListener('click', () => {
@@ -280,15 +348,15 @@ class AuraHabitApp {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.getAttribute('data-index'));
         const dateStr = this.getLocalDateString();
-        const currentIntake = this.state.hydration[dateStr] || 0;
+        const activeProfile = this.state.profiles[this.state.currentUser];
+        const currentIntake = activeProfile.hydration[dateStr] || 0;
         
         let newIntake = idx + 1;
-        // If they click the same active bottle (e.g. index 2 with water intake 3), toggle it down to index 2 (water intake 2)
         if (currentIntake === idx + 1) {
           newIntake = idx;
         }
         
-        this.state.hydration[dateStr] = newIntake;
+        activeProfile.hydration[dateStr] = newIntake;
         this.saveState();
         this.render();
       });
@@ -299,7 +367,6 @@ class AuraHabitApp {
   openModal() {
     this.elements.modal.classList.add('active');
     document.getElementById('habit-name').focus();
-    // Default form routine to the currently open tab routine
     const radios = document.getElementsByName('habit-routine');
     radios.forEach(r => {
       r.checked = (r.value === this.state.activeRoutine);
@@ -322,21 +389,23 @@ class AuraHabitApp {
       streak: 0
     };
     
-    this.state.habits.push(newHabit);
+    this.state.profiles[this.state.currentUser].habits.push(newHabit);
     this.saveState();
     this.render();
   }
 
   // --- Delete Habit ---
   deleteHabit(id) {
-    this.state.habits = this.state.habits.filter(h => h.id !== id);
+    const activeProfile = this.state.profiles[this.state.currentUser];
+    activeProfile.habits = activeProfile.habits.filter(h => h.id !== id);
     this.saveState();
     this.render();
   }
 
   // --- Toggle Habit Completion ---
   toggleHabitCompletion(id, dateStr) {
-    const habit = this.state.habits.find(h => h.id === id);
+    const activeProfile = this.state.profiles[this.state.currentUser];
+    const habit = activeProfile.habits.find(h => h.id === id);
     if (habit) {
       if (habit.history[dateStr]) {
         delete habit.history[dateStr];
@@ -350,9 +419,10 @@ class AuraHabitApp {
 
   // --- Streaks Core Engine ---
   calculateStreaks() {
-    // Gather all dates where AT LEAST ONE habit of any routine was completed
+    const activeProfile = this.state.profiles[this.state.currentUser];
     const completedDates = new Set();
-    this.state.habits.forEach(h => {
+    
+    activeProfile.habits.forEach(h => {
       Object.keys(h.history).forEach(d => {
         if (h.history[d]) {
           completedDates.add(d);
@@ -426,12 +496,33 @@ class AuraHabitApp {
   // --- Render Orchestrator ---
   render() {
     const todayStr = this.getLocalDateString();
+    const currentUser = this.state.currentUser;
+    const activeProfile = this.state.profiles[currentUser];
     
-    // Update theme overrides if specified
-    if (this.state.themeOverride) {
+    // --- 0. Update Profile Header Text & Dropdown Items ---
+    if (this.elements.currentUserName) this.elements.currentUserName.textContent = currentUser;
+    if (this.elements.userSubtitle) this.elements.userSubtitle.textContent = `${currentUser}'s Space`;
+    
+    // Update dynamic clocks / greetings immediately
+    const hour = new Date().getHours();
+    this.updateGreetingText(hour);
+
+    if (this.elements.themeOverride) {
       this.elements.body.className = this.state.themeOverride === 'morning' ? 'morning-theme' : 'evening-theme';
     } else {
-      this.updateThemeStyle(new Date().getHours());
+      this.updateThemeStyle(hour);
+    }
+
+    // Toggle active markers in dropdown list
+    if (this.elements.profileMenu) {
+      const menuItems = this.elements.profileMenu.querySelectorAll('.profile-menu-item');
+      menuItems.forEach(mi => {
+        if (mi.getAttribute('data-user') === currentUser) {
+          mi.classList.add('active');
+        } else {
+          mi.classList.remove('active');
+        }
+      });
     }
 
     // --- 1. Render Tabs UI ---
@@ -444,31 +535,31 @@ class AuraHabitApp {
     }
 
     // --- 2. Render Overall Gauge Progression ---
-    const morningHabits = this.state.habits.filter(h => h.routine === 'morning');
-    const eveningHabits = this.state.habits.filter(h => h.routine === 'evening');
+    const morningHabits = activeProfile.habits.filter(h => h.routine === 'morning');
+    const eveningHabits = activeProfile.habits.filter(h => h.routine === 'evening');
 
     const morningCompleted = morningHabits.filter(h => h.history[todayStr]).length;
     const eveningCompleted = eveningHabits.filter(h => h.history[todayStr]).length;
 
-    const totalHabitsCount = this.state.habits.length;
+    const totalHabitsCount = activeProfile.habits.length;
     const totalCompletedCount = morningCompleted + eveningCompleted;
     
     // Overall Percentage
     const percentage = totalHabitsCount > 0 ? Math.round((totalCompletedCount / totalHabitsCount) * 100) : 0;
     this.elements.overallPercentage.textContent = `${percentage}% Done`;
 
-    // Morning Ratio & Circular SVG Gauge (diameter = 64, circumference = 2 * PI * r = 2 * Math.PI * 32 = 201)
+    // Morning Ratio SVG Gauge
     this.elements.morningRatio.textContent = `${morningCompleted}/${morningHabits.length}`;
     const morningOffset = morningHabits.length > 0 ? 201 - (morningCompleted / morningHabits.length) * 201 : 201;
     this.elements.morningGauge.setAttribute('stroke-dashoffset', morningOffset);
 
-    // Evening Ratio & Circular SVG Gauge
+    // Evening Ratio SVG Gauge
     this.elements.eveningRatio.textContent = `${eveningCompleted}/${eveningHabits.length}`;
     const eveningOffset = eveningHabits.length > 0 ? 201 - (eveningCompleted / eveningHabits.length) * 201 : 201;
     this.elements.eveningGauge.setAttribute('stroke-dashoffset', eveningOffset);
 
     // --- 3. Hydration Rendering ---
-    const waterLevel = this.state.hydration[todayStr] || 0;
+    const waterLevel = activeProfile.hydration[todayStr] || 0;
     this.elements.waterIntake.textContent = waterLevel;
     
     const bottleBtns = this.elements.bottlesGrid.querySelectorAll('.bottle-btn');
@@ -485,19 +576,17 @@ class AuraHabitApp {
     this.elements.currentStreakVal.textContent = streaks.current;
     this.elements.bestStreakVal.textContent = streaks.best;
     
-    // Streaks feedback message
     if (streaks.current > 0) {
-      this.elements.streakMotivation.textContent = `Amazing! You are holding a ${streaks.current}-day habit streak. Keep going!`;
+      this.elements.streakMotivation.textContent = `Amazing! ${currentUser} holds a ${streaks.current}-day habit streak!`;
     } else {
       this.elements.streakMotivation.textContent = `Start completion today to build momentum!`;
     }
 
     // --- 5. Render Habit Cards Checklist ---
-    const filteredHabits = this.state.habits.filter(h => h.routine === this.state.activeRoutine);
+    const filteredHabits = activeProfile.habits.filter(h => h.routine === this.state.activeRoutine);
     this.elements.habitListContainer.innerHTML = '';
     
     if (filteredHabits.length === 0) {
-      // Empty routine container
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'glass-card empty-state';
       emptyDiv.innerHTML = `
@@ -538,13 +627,11 @@ class AuraHabitApp {
           </div>
         `;
         
-        // Add completion change listener
         const checkbox = card.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', () => {
           this.toggleHabitCompletion(habit.id, todayStr);
         });
         
-        // Add delete listener
         const deleteBtn = card.querySelector('.delete-habit-btn');
         deleteBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -567,11 +654,11 @@ class AuraHabitApp {
   // --- Render Weekly Progress Dots Grid ---
   renderWeeklyLog() {
     this.elements.weeklyDaysGrid.innerHTML = '';
+    const activeProfile = this.state.profiles[this.state.currentUser];
     
     const daysArr = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     
-    // Generate last 7 days backward
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -585,12 +672,10 @@ class AuraHabitApp {
       const dayName = weekdays[date.getDay()];
       const dayNum = date.getDate();
       
-      // Check if morning habits were completed
-      const morningHabits = this.state.habits.filter(h => h.routine === 'morning');
+      const morningHabits = activeProfile.habits.filter(h => h.routine === 'morning');
       const morningCompletedAny = morningHabits.some(h => h.history[dateStr]);
       
-      // Check if evening habits were completed
-      const eveningHabits = this.state.habits.filter(h => h.routine === 'evening');
+      const eveningHabits = activeProfile.habits.filter(h => h.routine === 'evening');
       const eveningCompletedAny = eveningHabits.some(h => h.history[dateStr]);
       
       const dayCol = document.createElement('div');
