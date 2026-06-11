@@ -1057,32 +1057,132 @@ body {
 
 @media (max-width: 600px) {
   body {
-    padding: 20px 10px;
+    padding: 16px 12px;
   }
   
   #greeting-text {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin: 3px 0;
+  }
+
+  .greeting-subtitle {
+    font-size: 0.8rem;
   }
   
+  /* Compact overview cards */
+  .overview-card {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  /* Compact Water Bottles */
+  .bottles-container {
+    gap: 4px;
+  }
+
+  .bottle-btn {
+    height: 42px;
+    padding: 6px 2px;
+  }
+
+  .bottle-btn i {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Compact Streaks */
+  .streak-num {
+    font-size: 1.6rem;
+  }
+
+  .streak-lbl {
+    font-size: 0.7rem;
+  }
+
+  /* Inline routine tabs and add habit button */
   .routine-tabs-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
   }
   
   .tabs-slider-wrapper {
+    flex-grow: 1;
+    padding: 4px;
+    border-radius: var(--border-radius-md);
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    gap: 4px;
+    flex-grow: 1;
     justify-content: center;
+  }
+
+  .tab-btn i {
+    width: 14px;
+    height: 14px;
   }
   
   .add-btn {
-    justify-content: center;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
-  
+
+  .add-btn i {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Compact Habit Cards */
+  .habit-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .habit-title {
+    font-size: 1.02rem;
+  }
+
+  .habit-desc {
+    font-size: 0.8rem;
+  }
+
+  .habit-card-streak {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Fit all 7 days of weekly progress log */
   .weekly-days-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
   }
-  
-  .day-column:nth-child(n+5) {
-    display: none; /* Hide older days to save space on mobile */
+
+  .day-column {
+    padding: 8px 2px;
+    gap: 4px;
+    border-radius: var(--border-radius-sm);
+  }
+
+  .day-name {
+    font-size: 0.65rem;
+  }
+
+  .day-number {
+    font-size: 0.8rem;
+  }
+
+  .day-indicators {
+    gap: 3px;
+  }
+
+  .ind-dot {
+    width: 5px;
+    height: 5px;
   }
 }
 
