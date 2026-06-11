@@ -1085,3 +1085,115 @@ body {
     display: none; /* Hide older days to save space on mobile */
   }
 }
+
+/* --- Lock Screen Styling --- */
+.lock-screen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-gradient);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transition: opacity 0.4s var(--transition-ease), pointer-events 0.4s;
+}
+
+.lock-screen-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lock-card {
+  width: 90%;
+  max-width: 380px;
+  padding: 40px 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.lock-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.lock-icon-main {
+  width: 26px;
+  height: 26px;
+}
+
+.lock-card h2 {
+  font-family: var(--font-accent);
+  font-size: 2rem;
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lock-card p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+#lock-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+#passcode-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px;
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-primary);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: 6px;
+  outline: none;
+  transition: all var(--transition-speed) var(--transition-ease);
+}
+
+#passcode-input:focus {
+  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.unlock-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.error-msg {
+  color: var(--accent-color) !important;
+  font-size: 0.85rem !important;
+  display: none;
+  font-weight: 600;
+  animation: shakeInput 0.3s ease;
+}
+
+@keyframes shakeInput {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}

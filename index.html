@@ -21,6 +21,24 @@
   <meta name="apple-mobile-web-app-title" content="AuraHabit">
 </head>
 <body class="morning-theme">
+  <!-- Lock Screen Overlay -->
+  <div class="lock-screen-overlay" id="lock-screen">
+    <div class="lock-card glass-card">
+      <div class="lock-icon-wrapper">
+        <i data-lucide="lock" class="lock-icon-main"></i>
+      </div>
+      <h2>AuraHabit</h2>
+      <p>Passcode protected space</p>
+      <form id="lock-form">
+        <input type="password" id="passcode-input" placeholder="••••" required autofocus autocomplete="current-password">
+        <button type="submit" class="submit-btn unlock-btn">
+          Unlock Space
+        </button>
+        <p class="error-msg" id="lock-error-msg">Incorrect passcode. Try again.</p>
+      </form>
+    </div>
+  </div>
+
   <!-- Dynamic Aura Background Elements -->
   <div class="aura-bg-sphere aura-1"></div>
   <div class="aura-bg-sphere aura-2"></div>

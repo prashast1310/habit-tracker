@@ -32,8 +32,45 @@ class AuraHabitApp {
 
   // --- Initialize App ---
   init() {
-    this.loadState();
     this.cacheDOM();
+    this.setupLockScreen();
+  }
+
+  setupLockScreen() {
+    const isUnlocked = localStorage.getItem('aurahabit_unlocked') === 'true';
+    const lockScreen = document.getElementById('lock-screen');
+    
+    if (isUnlocked) {
+      if (lockScreen) lockScreen.classList.add('hidden');
+      this.continueInitialization();
+    } else {
+      const lockForm = document.getElementById('lock-form');
+      if (lockForm) {
+        lockForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('passcode-input');
+          const errorMsg = document.getElementById('lock-error-msg');
+          
+          if (input && input.value === 'pvnrt') {
+            localStorage.setItem('aurahabit_unlocked', 'true');
+            if (lockScreen) lockScreen.classList.add('hidden');
+            this.continueInitialization();
+          } else {
+            if (input) input.value = '';
+            if (errorMsg) {
+              errorMsg.style.display = 'block';
+              errorMsg.style.animation = 'none';
+              void errorMsg.offsetWidth; // trigger reflow
+              errorMsg.style.animation = 'shakeInput 0.3s ease';
+            }
+          }
+        });
+      }
+    }
+  }
+
+  continueInitialization() {
+    this.loadState();
     this.determineInitialRoutine();
     this.setupEventListeners();
     this.startClock();
