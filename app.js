@@ -855,6 +855,9 @@ class AuraHabitApp {
       const [makeBedHabit] = activeProfile.habits.splice(makeBedIdx, 1);
       activeProfile.habits.unshift(makeBedHabit);
       this.saveState();
+      if (this.isCloudEnabled) {
+        this.syncProfileToCloud(this.state.currentUser);
+      }
     }
 
     const filteredHabits = activeProfile.habits.filter(h => h.routine === this.state.activeRoutine);
