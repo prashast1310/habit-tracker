@@ -34,6 +34,11 @@ self.addEventListener('activate', event => {
 
 // Fetch interception to support offline mode
 self.addEventListener('fetch', event => {
+  // Bypass service worker caching for cloud database API calls
+  if (event.request.url.includes('kvdb.io')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       return cachedResponse || fetch(event.request);

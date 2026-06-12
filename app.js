@@ -107,7 +107,9 @@ class AuraHabitApp {
   async syncProfileFromCloud(user) {
     this.setCloudStatus('syncing');
     try {
-      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}`);
+      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}?t=${Date.now()}`, {
+        cache: 'no-store'
+      });
       if (response.ok) {
         const cloudData = await response.json();
         if (cloudData && cloudData.habits) {
