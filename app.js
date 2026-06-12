@@ -8,9 +8,9 @@ class AuraHabitApp {
     
     // Default Habits Setup (used to initialize profiles)
     this.defaultHabits = [
+      { id: 'h3', name: 'Make bed', desc: 'Set a neat tone for the day', routine: 'morning', history: {}, streak: 0 },
       { id: 'h1', name: 'Meditate', desc: 'Focus on breathing & mindfulness', routine: 'morning', history: {}, streak: 0 },
       { id: 'h2', name: 'Journal', desc: 'Reflect and plan the day', routine: 'morning', history: {}, streak: 0 },
-      { id: 'h3', name: 'Make bed', desc: 'Set a neat tone for the day', routine: 'morning', history: {}, streak: 0 },
       { id: 'h4', name: 'Protein Intake', desc: 'Fuel your morning structure', routine: 'morning', history: {}, streak: 0 },
       { id: 'h5', name: 'Workout', desc: 'Get moving and build strength', routine: 'evening', history: {}, streak: 0 },
       { id: 'h6', name: 'Protein Intake', desc: 'Support recovery and repair', routine: 'evening', history: {}, streak: 0 },
@@ -682,6 +682,14 @@ class AuraHabitApp {
     }
 
     // --- 5. Render Habit Cards Checklist ---
+    // Ensure Make Bed is always at the top of the morning routine list
+    const makeBedIdx = activeProfile.habits.findIndex(h => h.name.toLowerCase() === 'make bed' && h.routine === 'morning');
+    if (makeBedIdx > 0) {
+      const [makeBedHabit] = activeProfile.habits.splice(makeBedIdx, 1);
+      activeProfile.habits.unshift(makeBedHabit);
+      this.saveState();
+    }
+
     const filteredHabits = activeProfile.habits.filter(h => h.routine === this.state.activeRoutine);
     this.elements.habitListContainer.innerHTML = '';
     
