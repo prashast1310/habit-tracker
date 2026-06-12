@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Supabase CDN Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Stylesheets & Manifest -->
@@ -75,6 +77,11 @@
           <i data-lucide="cloud" class="cloud-icon"></i>
           <span class="cloud-status-dot"></span>
         </div>
+
+        <!-- Settings Setup Button -->
+        <button id="settings-toggle-btn" class="glass-btn settings-toggle-btn" title="Configure Cloud Database">
+          <i data-lucide="settings"></i>
+        </button>
 
         <!-- Manual Theme & Routine Switcher Toggle -->
         <button id="theme-toggle-btn" class="glass-btn theme-toggle-btn" title="Toggle Theme Manual Override">
@@ -251,6 +258,31 @@
         <div class="form-actions">
           <button type="button" class="cancel-btn" id="cancel-modal-btn">Cancel</button>
           <button type="submit" class="submit-btn">Create Habit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settings Modal Dialog -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h2>Database Settings</h2>
+        <button class="close-btn" id="close-settings-modal-btn">&times;</button>
+      </div>
+      <form id="settings-form" class="modal-form">
+        <p class="modal-desc-text">To sync habits between devices, create a free project at <a href="https://supabase.com" target="_blank">supabase.com</a>, run the SQL setup query, and paste your credentials below.</p>
+        <div class="form-group">
+          <label for="sb-url">Supabase Project URL</label>
+          <input type="text" id="sb-url" placeholder="https://your-project.supabase.co" autocomplete="off" required>
+        </div>
+        <div class="form-group">
+          <label for="sb-key">Supabase Anon Public Key</label>
+          <input type="password" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off" required>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" id="cancel-settings-btn">Cancel</button>
+          <button type="submit" class="submit-btn">Save & Sync</button>
         </div>
       </form>
     </div>

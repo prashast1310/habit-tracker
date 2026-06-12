@@ -4,7 +4,6 @@
 class AuraHabitApp {
   constructor() {
     this.storageKey = 'aurahabit_state_v1';
-    this.kvdbBucket = 'CuigENjBBWji4SdX7Ypyk9'; // Cloud sync database ID
     
     // Default Habits Setup (used to initialize profiles)
     this.defaultHabits = [
@@ -32,6 +31,10 @@ class AuraHabitApp {
       activeRoutine: 'morning', // 'morning' | 'evening'
       themeOverride: null // 'morning' | 'evening' | null (null auto-calculates based on time)
     };
+
+    // Supabase State
+    this.supabase = null;
+    this.isCloudEnabled = false;
 
     // DOM Caching
     this.elements = {};
@@ -81,6 +84,7 @@ class AuraHabitApp {
 
   continueInitialization() {
     this.loadState();
+    this.initSupabase();
     this.determineInitialRoutine();
     this.setupEventListeners();
     this.startClock();
@@ -88,68 +92,146 @@ class AuraHabitApp {
     // Initial Render
     this.render();
 
-    // Trigger Cloud Sync Background Threads
-    this.syncAllProfilesFromCloud();
+    // Trigger Supabase Cloud Sync
+    if (this.isCloudEnabled) {
+      this.syncAllProfilesFromCloud();
+    }
   }
 
-  // --- Cloud Database Synchronizers ---
+  // --- Initialize Supabase Client ---
+  initSupabase() {
+    const url = localStorage.getItem('aurahabit_supabase_url');
+    const key = localStorage.getItem('aurahabit_supabase_key');
+    
+    if (url && key && typeof supabase !== 'undefined') {
+      try {
+        this.supabase = supabase.createClient(url, key);
+        this.isCloudEnabled = true;
+      } catch (err) {
+        console.error('Failed to initialize Supabase client:', err);
+        this.supabase = null;
+        this.isCloudEnabled = false;
+      }
+    } else {
+      this.supabase = null;
+      this.isCloudEnabled = false;
+    }
+  }
+
+  // --- Supabase Cloud Sync Operations ---
   setCloudStatus(status) { // 'synced' | 'syncing' | 'offline'
     if (!this.elements.cloudStatus) return;
     this.elements.cloudStatus.className = 'cloud-status-indicator ' + status;
     
     let title = 'Cloud Sync: ';
-    if (status === 'synced') title += 'All changes saved to cloud database';
-    if (status === 'syncing') title += 'Syncing changes with cloud database...';
-    if (status === 'offline') title += 'Cannot connect to database. Storing changes locally.';
+    if (!this.isCloudEnabled) {
+      this.elements.cloudStatus.className = 'cloud-status-indicator offline';
+      title += 'Not configured. Tap settings gear to set up Supabase sync.';
+    } else {
+      if (status === 'synced') title += 'All changes saved to Supabase';
+      if (status === 'syncing') title += 'Syncing changes with Supabase...';
+      if (status === 'offline') title += 'Cannot connect to Supabase. Storing changes locally.';
+    }
     this.elements.cloudStatus.setAttribute('title', title);
   }
 
   async syncProfileFromCloud(user) {
+    if (!this.isCloudEnabled) {
+      this.setCloudStatus('offline');
+      return false;
+    }
     this.setCloudStatus('syncing');
     try {
-      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}?t=${Date.now()}`, {
-        cache: 'no-store'
-      });
-      if (response.ok) {
-        const cloudData = await response.json();
-        if (cloudData && cloudData.habits) {
-          this.state.profiles[user] = cloudData;
-          this.saveState(); // Update local backup
-          this.setCloudStatus('synced');
-          return true;
-        }
-      } else if (response.status === 404) {
-        // Doesn't exist on cloud yet. Let's upload local state.
+      // 1. Fetch habits from Supabase
+      const { data: habitsData, error: habitsError } = await this.supabase
+        .from('habits')
+        .select('*')
+        .eq('profile_name', user);
+        
+      if (habitsError) throw habitsError;
+      
+      // 2. Fetch hydration logs from Supabase
+      const { data: hydrationData, error: hydrationError } = await this.supabase
+        .from('hydration')
+        .select('*')
+        .eq('profile_name', user);
+        
+      if (hydrationError) throw hydrationError;
+
+      const activeProfile = this.state.profiles[user];
+      
+      // Map database rows back to our habits state format
+      if (habitsData && habitsData.length > 0) {
+        activeProfile.habits = habitsData.map(h => ({
+          id: h.id,
+          name: h.name,
+          desc: h.description || '',
+          routine: h.routine,
+          history: h.history || {}
+        }));
+      } else {
+        // If no habits exist on Supabase, upload local defaults
         await this.syncProfileToCloud(user);
-        this.setCloudStatus('synced');
-        return true;
       }
+
+      // Map hydration database rows back to our hydration state format
+      if (hydrationData) {
+        activeProfile.hydration = {};
+        hydrationData.forEach(row => {
+          activeProfile.hydration[row.log_date] = row.bottles;
+        });
+      }
+      
+      this.saveState();
+      this.setCloudStatus('synced');
+      return true;
     } catch (err) {
-      console.warn(`Could not sync profile ${user} from cloud (offline):`, err);
+      console.warn(`Could not sync profile ${user} from Supabase:`, err);
       this.setCloudStatus('offline');
     }
     return false;
   }
 
   async syncProfileToCloud(user) {
+    if (!this.isCloudEnabled) return false;
     this.setCloudStatus('syncing');
-    const profileData = this.state.profiles[user];
+    const activeProfile = this.state.profiles[user];
     try {
-      const response = await fetch(`https://kvdb.io/${this.kvdbBucket}/profile_${user}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(profileData)
-      });
-      if (response.ok) {
-        this.setCloudStatus('synced');
-        return true;
-      } else {
-        this.setCloudStatus('offline');
+      // 1. Upsert habits to Supabase
+      const habitsToUpsert = activeProfile.habits.map(h => ({
+        id: h.id,
+        profile_name: user,
+        name: h.name,
+        description: h.desc,
+        routine: h.routine,
+        history: h.history
+      }));
+
+      if (habitsToUpsert.length > 0) {
+        const { error: habitsError } = await this.supabase
+          .from('habits')
+          .upsert(habitsToUpsert);
+        if (habitsError) throw habitsError;
       }
+
+      // 2. Upsert hydration logs to Supabase
+      const hydrationToUpsert = Object.keys(activeProfile.hydration).map(dateStr => ({
+        profile_name: user,
+        log_date: dateStr,
+        bottles: activeProfile.hydration[dateStr]
+      }));
+
+      if (hydrationToUpsert.length > 0) {
+        const { error: hydrationError } = await this.supabase
+          .from('hydration')
+          .upsert(hydrationToUpsert);
+        if (hydrationError) throw hydrationError;
+      }
+
+      this.setCloudStatus('synced');
+      return true;
     } catch (err) {
-      console.warn(`Could not sync profile ${user} to cloud (offline):`, err);
+      console.warn(`Could not sync profile ${user} to Supabase:`, err);
       this.setCloudStatus('offline');
     }
     return false;
@@ -264,11 +346,20 @@ class AuraHabitApp {
     this.elements.weeklyDaysGrid = document.getElementById('weekly-days-grid');
     this.elements.themeToggleBtn = document.getElementById('theme-toggle-btn');
     
-    // Modal
+    // Modal Habit
     this.elements.modal = document.getElementById('habit-modal');
     this.elements.modalForm = document.getElementById('add-habit-form');
     this.elements.closeModalBtn = document.getElementById('close-modal-btn');
     this.elements.cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+    // Modal Settings
+    this.elements.settingsToggle = document.getElementById('settings-toggle-btn');
+    this.elements.settingsModal = document.getElementById('settings-modal');
+    this.elements.settingsForm = document.getElementById('settings-form');
+    this.elements.closeSettingsBtn = document.getElementById('close-settings-modal-btn');
+    this.elements.cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+    this.elements.sbUrl = document.getElementById('sb-url');
+    this.elements.sbKey = document.getElementById('sb-key');
   }
 
   // --- Determine initial active routine ---
@@ -393,30 +484,58 @@ class AuraHabitApp {
           this.render();
 
           // Sync profile values from cloud upon switching
-          this.syncProfileFromCloud(user).then((success) => {
-            if (success) this.render();
-          });
+          if (this.isCloudEnabled) {
+            this.syncProfileFromCloud(user).then((success) => {
+              if (success) this.render();
+            });
+          }
         });
       });
     }
 
-    // Routine Tabs Toggle
-    this.elements.tabMorning.addEventListener('click', () => {
-      this.state.activeRoutine = 'morning';
-      this.render();
-    });
-
-    this.elements.tabEvening.addEventListener('click', () => {
-      this.state.activeRoutine = 'evening';
-      this.render();
-    });
-
-    // Modal Control
+    // Modal Habits Controls
     this.elements.addHabitBtn.addEventListener('click', () => this.openModal());
     this.elements.closeModalBtn.addEventListener('click', () => this.closeModal());
     this.elements.cancelModalBtn.addEventListener('click', () => this.closeModal());
+
+    // Modal Settings Controls
+    if (this.elements.settingsToggle) {
+      this.elements.settingsToggle.addEventListener('click', () => this.openSettingsModal());
+    }
+    if (this.elements.closeSettingsBtn) {
+      this.elements.closeSettingsBtn.addEventListener('click', () => this.closeSettingsModal());
+    }
+    if (this.elements.cancelSettingsBtn) {
+      this.elements.cancelSettingsBtn.addEventListener('click', () => this.closeSettingsModal());
+    }
+
+    // Settings Submit Form
+    if (this.elements.settingsForm) {
+      this.elements.settingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = this.elements.sbUrl.value.trim();
+        const key = this.elements.sbKey.value.trim();
+        
+        if (url && key) {
+          localStorage.setItem('aurahabit_supabase_url', url);
+          localStorage.setItem('aurahabit_supabase_key', key);
+          
+          // Re-initialize Supabase client
+          this.initSupabase();
+          this.closeSettingsModal();
+          this.render();
+          
+          if (this.isCloudEnabled) {
+            // Immediately sync with new database, pushing local backups first
+            this.syncProfileToCloud('Nihu');
+            this.syncProfileToCloud('Pruthu');
+            this.syncAllProfilesFromCloud();
+          }
+        }
+      });
+    }
     
-    // Form Submit
+    // Form Submit (Habit)
     this.elements.modalForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = document.getElementById('habit-name').value.trim();
@@ -448,8 +567,21 @@ class AuraHabitApp {
         this.render();
 
         // Push hydration updates to cloud database
-        this.syncProfileToCloud(this.state.currentUser);
+        if (this.isCloudEnabled) {
+          this.syncProfileToCloud(this.state.currentUser);
+        }
       });
+    });
+
+    // Routine Tabs Toggle
+    this.elements.tabMorning.addEventListener('click', () => {
+      this.state.activeRoutine = 'morning';
+      this.render();
+    });
+
+    this.elements.tabEvening.addEventListener('click', () => {
+      this.state.activeRoutine = 'evening';
+      this.render();
     });
   }
 
@@ -468,6 +600,22 @@ class AuraHabitApp {
     this.elements.modalForm.reset();
   }
 
+  openSettingsModal() {
+    if (this.elements.settingsModal) {
+      this.elements.sbUrl.value = localStorage.getItem('aurahabit_supabase_url') || '';
+      this.elements.sbKey.value = localStorage.getItem('aurahabit_supabase_key') || '';
+      this.elements.settingsModal.classList.add('active');
+      this.elements.sbUrl.focus();
+    }
+  }
+
+  closeSettingsModal() {
+    if (this.elements.settingsModal) {
+      this.elements.settingsModal.classList.remove('active');
+      this.elements.settingsForm.reset();
+    }
+  }
+
   // --- Add Custom Habit ---
   addHabit(name, desc, routine) {
     const newHabit = {
@@ -484,18 +632,32 @@ class AuraHabitApp {
     this.render();
 
     // Push addition to cloud database
-    this.syncProfileToCloud(this.state.currentUser);
+    if (this.isCloudEnabled) {
+      this.syncProfileToCloud(this.state.currentUser);
+    }
   }
 
   // --- Delete Habit ---
-  deleteHabit(id) {
+  async deleteHabit(id) {
     const activeProfile = this.state.profiles[this.state.currentUser];
     activeProfile.habits = activeProfile.habits.filter(h => h.id !== id);
     this.saveState();
     this.render();
 
     // Push deletion to cloud database
-    this.syncProfileToCloud(this.state.currentUser);
+    if (this.isCloudEnabled) {
+      try {
+        const { error } = await this.supabase
+          .from('habits')
+          .delete()
+          .eq('id', id);
+        if (error) throw error;
+        this.setCloudStatus('synced');
+      } catch (err) {
+        console.warn(`Could not delete habit on Supabase:`, err);
+        this.setCloudStatus('offline');
+      }
+    }
   }
 
   // --- Toggle Habit Completion ---
@@ -512,7 +674,9 @@ class AuraHabitApp {
       this.render();
 
       // Push tick changes to cloud database
-      this.syncProfileToCloud(this.state.currentUser);
+      if (this.isCloudEnabled) {
+        this.syncProfileToCloud(this.state.currentUser);
+      }
     }
   }
 
@@ -611,6 +775,9 @@ class AuraHabitApp {
     } else {
       this.updateThemeStyle(hour);
     }
+
+    // Update cloud status display
+    this.setCloudStatus('synced');
 
     // Toggle active markers in dropdown list
     if (this.elements.profileMenu) {
