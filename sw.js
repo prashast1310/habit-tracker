@@ -32,7 +32,7 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch interception to support offline mode
+// Network-First fetching strategy with offline cache fallback
 self.addEventListener('fetch', event => {
   // Bypass service worker caching for cloud database API calls
   if (event.request.url.includes('kvdb.io')) {
@@ -40,8 +40,20 @@ self.addEventListener('fetch', event => {
   }
 
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      return cachedResponse || fetch(event.request);
-    })
+    fetch(event.request)
+      .then(response => {
+        // If response is valid, update the cache for offline fallback
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // If network request fails (offline), load from cache
+        return caches.match(event.request);
+      })
   );
 });
