@@ -29,7 +29,8 @@ class AuraHabitApp {
         }
       },
       activeRoutine: 'morning', // 'morning' | 'evening'
-      themeOverride: null // 'morning' | 'evening' | null (null auto-calculates based on time)
+      themeOverride: null, // 'morning' | 'evening' | null (null auto-calculates based on time)
+      selectedDate: this.getLocalDateString()
     };
 
     // Supabase State
@@ -414,14 +415,18 @@ class AuraHabitApp {
   updateGreetingText(hour) {
     const user = this.state.currentUser;
     let greeting = '';
-    if (hour >= 5 && hour < 12) {
-      greeting = `Rise & Shine, ${user}! 🌅`;
-    } else if (hour >= 12 && hour < 17) {
-      greeting = `Good Afternoon, ${user}! ☀️`;
-    } else if (hour >= 17 && hour < 22) {
-      greeting = `Good Evening, ${user}! 🌌`;
+    if (this.state.activeRoutine === 'morning') {
+      if (hour >= 12 && hour < 17) {
+        greeting = `Good Afternoon, ${user}!`;
+      } else {
+        greeting = `Rise & Shine, ${user}!`;
+      }
     } else {
-      greeting = `Time to Unwind, ${user}! 🌙`;
+      if (hour >= 22 || hour < 5) {
+        greeting = `Time to Unwind, ${user}!`;
+      } else {
+        greeting = `Good Evening, ${user}!`;
+      }
     }
     
     if (this.elements.greeting && this.elements.greeting.textContent !== greeting) {
@@ -429,17 +434,19 @@ class AuraHabitApp {
     }
   }
 
-  // --- Theme Class Manager ---
   updateThemeStyle(hour) {
+    let theme;
     if (this.state.themeOverride) {
-      this.elements.body.className = this.state.themeOverride === 'morning' ? 'morning-theme' : 'evening-theme';
-      return;
+      theme = this.state.themeOverride;
+    } else {
+      theme = (hour >= 5 && hour < 16) ? 'morning' : 'evening';
     }
     
-    if (hour >= 5 && hour < 16) {
-      this.elements.body.className = 'morning-theme';
-    } else {
-      this.elements.body.className = 'evening-theme';
+    this.elements.body.className = theme === 'morning' ? 'morning-theme' : 'evening-theme';
+    
+    // Sync active routine with currently active theme
+    if (this.state.activeRoutine !== theme) {
+      this.state.activeRoutine = theme;
     }
   }
 
@@ -450,8 +457,10 @@ class AuraHabitApp {
       const currentClass = this.elements.body.className;
       if (currentClass === 'morning-theme') {
         this.state.themeOverride = 'evening';
+        this.state.activeRoutine = 'evening';
       } else {
         this.state.themeOverride = 'morning';
+        this.state.activeRoutine = 'morning';
       }
       this.saveState();
       this.render();
@@ -553,7 +562,7 @@ class AuraHabitApp {
     bottleBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.getAttribute('data-index'));
-        const dateStr = this.getLocalDateString();
+        const dateStr = this.state.selectedDate;
         const activeProfile = this.state.profiles[this.state.currentUser];
         const currentIntake = activeProfile.hydration[dateStr] || 0;
         
@@ -576,11 +585,15 @@ class AuraHabitApp {
     // Routine Tabs Toggle
     this.elements.tabMorning.addEventListener('click', () => {
       this.state.activeRoutine = 'morning';
+      this.state.themeOverride = 'morning';
+      this.saveState();
       this.render();
     });
 
     this.elements.tabEvening.addEventListener('click', () => {
       this.state.activeRoutine = 'evening';
+      this.state.themeOverride = 'evening';
+      this.saveState();
       this.render();
     });
   }
@@ -759,6 +772,7 @@ class AuraHabitApp {
   // --- Render Orchestrator ---
   render() {
     const todayStr = this.getLocalDateString();
+    const selectedDateStr = this.state.selectedDate;
     const currentUser = this.state.currentUser;
     const activeProfile = this.state.profiles[currentUser];
     
@@ -804,8 +818,8 @@ class AuraHabitApp {
     const morningHabits = activeProfile.habits.filter(h => h.routine === 'morning');
     const eveningHabits = activeProfile.habits.filter(h => h.routine === 'evening');
 
-    const morningCompleted = morningHabits.filter(h => h.history[todayStr]).length;
-    const eveningCompleted = eveningHabits.filter(h => h.history[todayStr]).length;
+    const morningCompleted = morningHabits.filter(h => h.history[selectedDateStr]).length;
+    const eveningCompleted = eveningHabits.filter(h => h.history[selectedDateStr]).length;
 
     const totalHabitsCount = activeProfile.habits.length;
     const totalCompletedCount = morningCompleted + eveningCompleted;
@@ -825,7 +839,7 @@ class AuraHabitApp {
     this.elements.eveningGauge.setAttribute('stroke-dashoffset', eveningOffset);
 
     // --- 3. Hydration Rendering ---
-    const waterLevel = activeProfile.hydration[todayStr] || 0;
+    const waterLevel = activeProfile.hydration[selectedDateStr] || 0;
     this.elements.waterIntake.textContent = waterLevel;
     
     const bottleBtns = this.elements.bottlesGrid.querySelectorAll('.bottle-btn');
@@ -874,7 +888,7 @@ class AuraHabitApp {
       this.elements.habitListContainer.appendChild(emptyDiv);
     } else {
       filteredHabits.forEach(habit => {
-        const isCompleted = !!habit.history[todayStr];
+        const isCompleted = !!habit.history[selectedDateStr];
         const card = document.createElement('div');
         card.className = `glass-card habit-card ${isCompleted ? 'completed' : ''}`;
         
@@ -906,7 +920,7 @@ class AuraHabitApp {
         
         const checkbox = card.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', () => {
-          this.toggleHabitCompletion(habit.id, todayStr);
+          this.toggleHabitCompletion(habit.id, selectedDateStr);
         });
         
         const deleteBtn = card.querySelector('.delete-habit-btn');
@@ -945,6 +959,7 @@ class AuraHabitApp {
     daysArr.forEach(date => {
       const dateStr = this.getLocalDateString(date);
       const isToday = dateStr === this.getLocalDateString();
+      const isSelected = dateStr === this.state.selectedDate;
       
       const dayName = weekdays[date.getDay()];
       const dayNum = date.getDate();
@@ -956,7 +971,8 @@ class AuraHabitApp {
       const eveningCompletedAny = eveningHabits.some(h => h.history[dateStr]);
       
       const dayCol = document.createElement('div');
-      dayCol.className = `day-column ${isToday ? 'today' : ''}`;
+      dayCol.className = `day-column ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`;
+      dayCol.style.cursor = 'pointer';
       
       dayCol.innerHTML = `
         <span class="day-name">${dayName}</span>
@@ -966,6 +982,11 @@ class AuraHabitApp {
           <div class="ind-dot ${eveningCompletedAny ? 'evening-done' : ''}" title="Evening Routine Completion"></div>
         </div>
       `;
+      
+      dayCol.addEventListener('click', () => {
+        this.state.selectedDate = dateStr;
+        this.render();
+      });
       
       this.elements.weeklyDaysGrid.appendChild(dayCol);
     });

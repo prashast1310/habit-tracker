@@ -15,7 +15,7 @@
   <!-- Stylesheets & Manifest -->
   <link rel="stylesheet" href="styles.css">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ff9e7d">
+  <meta name="theme-color" content="#e86e58">
   <!-- Web Clip / PWA Support for iOS/Safari -->
   <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,7 +51,7 @@
     <header class="app-header">
       <div class="header-left">
         <span class="greeting-subtitle" id="user-subtitle">Nihu's Space</span>
-        <h1 id="greeting-text">Rise & Shine, Nihu! 🌅</h1>
+        <h1 id="greeting-text">Rise & Shine, Nihu!</h1>
         <p class="live-date-time"><span id="current-day">Thursday</span> • <span id="current-time">08:00 AM</span></p>
       </div>
       <div class="header-right">
@@ -72,11 +72,6 @@
           </div>
         </div>
 
-        <!-- Cloud Sync Status Indicator -->
-        <div class="cloud-status-indicator" id="cloud-status" title="Cloud Sync Status">
-          <i data-lucide="cloud" class="cloud-icon"></i>
-          <span class="cloud-status-dot"></span>
-        </div>
 
         <!-- Settings Setup Button -->
         <button id="settings-toggle-btn" class="glass-btn settings-toggle-btn" title="Configure Cloud Database">
@@ -102,7 +97,7 @@
         <div class="progress-gauges-container">
           <div class="gauge-wrapper" title="Morning Routine Completion">
             <svg class="progress-ring" width="80" height="80">
-              <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
+              <circle class="progress-ring-circle-bg" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
               <circle id="morning-gauge" class="progress-ring-circle" stroke="var(--primary-color)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40" stroke-dasharray="201" stroke-dashoffset="201"/>
             </svg>
             <div class="gauge-label">
@@ -112,7 +107,7 @@
           </div>
           <div class="gauge-wrapper" title="Evening Routine Completion">
             <svg class="progress-ring" width="80" height="80">
-              <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
+              <circle class="progress-ring-circle-bg" stroke-width="6" fill="transparent" r="32" cx="40" cy="40"/>
               <circle id="evening-gauge" class="progress-ring-circle" stroke="var(--evening-accent)" stroke-width="6" fill="transparent" r="32" cx="40" cy="40" stroke-dasharray="201" stroke-dashoffset="201"/>
             </svg>
             <div class="gauge-label">

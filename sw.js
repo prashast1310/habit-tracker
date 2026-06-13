@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aurahabit-cache-v2';
+const CACHE_NAME = 'aurahabit-cache-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(ASSETS);
-    })
+    }).then(() => self.skipWaiting())
   );
 });
 
@@ -28,7 +28,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
