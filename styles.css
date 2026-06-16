@@ -303,38 +303,6 @@ body {
   color: var(--text-secondary);
 }
 
-.theme-toggle-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  position: relative;
-}
-
-.theme-toggle-btn i {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  transition: transform var(--transition-speed) var(--transition-ease), opacity var(--transition-speed);
-}
-
-.morning-theme .theme-toggle-btn .sun-icon {
-  opacity: 1;
-  transform: rotate(0);
-}
-.morning-theme .theme-toggle-btn .moon-icon {
-  opacity: 0;
-  transform: rotate(90deg);
-}
-
-.evening-theme .theme-toggle-btn .sun-icon {
-  opacity: 0;
-  transform: rotate(-90deg);
-}
-.evening-theme .theme-toggle-btn .moon-icon {
-  opacity: 1;
-  transform: rotate(0);
-}
-
 /* --- Stats Dashboard Grid --- */
 .dashboard-grid {
   display: grid;

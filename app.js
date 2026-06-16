@@ -345,7 +345,6 @@ class AuraHabitApp {
     this.elements.habitListContainer = document.getElementById('habit-list-container');
     
     this.elements.weeklyDaysGrid = document.getElementById('weekly-days-grid');
-    this.elements.themeToggleBtn = document.getElementById('theme-toggle-btn');
     
     // Modal Habit
     this.elements.modal = document.getElementById('habit-modal');
@@ -452,20 +451,6 @@ class AuraHabitApp {
 
   // --- Setup Event Handlers ---
   setupEventListeners() {
-    // Manual Theme override toggle
-    this.elements.themeToggleBtn.addEventListener('click', () => {
-      const currentClass = this.elements.body.className;
-      if (currentClass === 'morning-theme') {
-        this.state.themeOverride = 'evening';
-        this.state.activeRoutine = 'evening';
-      } else {
-        this.state.themeOverride = 'morning';
-        this.state.activeRoutine = 'morning';
-      }
-      this.saveState();
-      this.render();
-    });
-
     // Profile Dropdown Toggle
     if (this.elements.profileSelectBtn) {
       this.elements.profileSelectBtn.addEventListener('click', (e) => {
@@ -784,11 +769,7 @@ class AuraHabitApp {
     const hour = new Date().getHours();
     this.updateGreetingText(hour);
 
-    if (this.elements.themeOverride) {
-      this.elements.body.className = this.state.themeOverride === 'morning' ? 'morning-theme' : 'evening-theme';
-    } else {
-      this.updateThemeStyle(hour);
-    }
+    this.updateThemeStyle(hour);
 
     // Update cloud status display
     this.setCloudStatus('synced');
